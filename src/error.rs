@@ -1,3 +1,4 @@
+use reqwest::StatusCode;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -5,6 +6,15 @@ pub enum AbacatePayError {
     #[error("HTTP request failed: {0}")]
     RequestError(#[from] reqwest::Error),
 
-    #[error("API error: {0}")]
-    ApiError(String),
+    #[error("API error ({status}): {message}")]
+    ApiError { status: StatusCode, message: String },
+
+    #[error("Failed to parse API response: {message}. Response: {response}")]
+    ParseError { message: String, response: String },
+
+    #[error("Unexpected response ({status}): {response}")]
+    UnexpectedResponse {
+        status: StatusCode,
+        response: String,
+    },
 }
