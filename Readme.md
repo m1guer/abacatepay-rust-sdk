@@ -1,10 +1,12 @@
+#### Creating bills
+```rust
 use abacatepay_rust_sdk::{
     AbacatePay, BillingKind, BillingMethods, CreateBillingData, CreateBillingProduct,
 };
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = AbacatePay::new("abc_dev_MUWd52PQja5UBhNTx2AtZRLQ".to_string());
+    let client = AbacatePay::new("api_key".to_string());
 
     // Create a billing
     let billing_data = CreateBillingData {
@@ -31,3 +33,4 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+```

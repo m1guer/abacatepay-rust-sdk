@@ -78,7 +78,7 @@ impl AbacatePay {
         &self,
         data: CreateBillingData,
     ) -> Result<Billing, AbacatePayError> {
-        let url = format!("{}/billing", self.base_url);
+        let url = format!("{}/billing/create", self.base_url);
 
         debug!(
             url = url.as_str(),
