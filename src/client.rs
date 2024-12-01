@@ -13,7 +13,7 @@ impl AbacatePay {
         Self {
             client: Client::new(),
             api_key,
-            base_url: "https://api.abacatepay.com/v1/".to_string(),
+            base_url: "https://api.abacatepay.com/v1".to_string(),
         }
     }
 
@@ -30,7 +30,7 @@ impl AbacatePay {
             .await?
             .json::<CreateBillingResponse>()
             .await?;
-
+        println!("{}/billing", self.base_url);
         match response {
             CreateBillingResponse::Success { billing, .. } => Ok(billing),
             CreateBillingResponse::Error { error } => Err(AbacatePayError::ApiError(error)),
