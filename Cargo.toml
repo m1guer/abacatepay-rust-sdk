@@ -7,7 +7,7 @@ description = "Official Rust SDK for AbacatePay API"
 license = "MIT"
 repository = "https://github.com/m1guer/abacate-pay-sdk"
 documentation = "https://docs.rs/abacate-pay-sdk"
-readme = "README.md"
+readme = "Readme.md"
 keywords = ["payment", "sdk", "api","gateway"]
 categories = ["api-bindings","gateway"]
 

@@ -1,4 +1,4 @@
-#### Creating bills
+#### example:
 ```rust
 use abacatepay_rust_sdk::{
     AbacatePay, BillingKind, BillingMethods, CreateBillingData, CreateBillingProduct,
