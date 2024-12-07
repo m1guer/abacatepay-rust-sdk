@@ -1,6 +1,6 @@
 [package]
 name = "abacatepay-rust-sdk"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = ["Jose Miguel Araujo Silva <miguelpintojose00@gmail.com>"]
 description = "Official Rust SDK for AbacatePay API"
@@ -8,8 +8,8 @@ license = "MIT"
 repository = "https://github.com/m1guer/abacate-pay-sdk"
 documentation = "https://docs.rs/abacate-pay-sdk"
 readme = "Readme.md"
-keywords = ["payment", "sdk", "api","gateway"]
-categories = ["api-bindings","gateway"]
+keywords = ["payment", "sdk", "api", "gateway"]
+categories = ["api-bindings", "gateway"]
 
 [dependencies]
 reqwest = { version = "0.12.9", features = ["json"] }
