@@ -9,7 +9,7 @@ repository = "https://github.com/m1guer/abacate-pay-sdk"
 documentation = "https://docs.rs/abacate-pay-sdk"
 readme = "Readme.md"
 keywords = ["payment", "sdk", "api", "gateway"]
-categories = ["api-bindings", "gateway"]
+categories = ["api-bindings"]
 
 [dependencies]
 reqwest = { version = "0.12.9", features = ["json"] }
