@@ -67,6 +67,7 @@ pub struct Customer {
 #[serde(rename_all = "camelCase")]
 pub struct Billing {
     pub metadata: Metadata,
+    #[serde(rename = "pId")]
     pub _id: String,
     pub public_id: String,
     pub products: Vec<Product>,
