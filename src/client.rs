@@ -2,7 +2,10 @@ use crate::billing::{
     Billing, BillingMethods, CreateBillingData, CreateBillingProduct, CreateBillingResponse,
     CustomerMetadata, ListBillingResponse,
 };
-use crate::pix_charge::{CreatePixChargeData, CreatePixChargeResponse, PixChargeData};
+use crate::pix_charge::{
+    CheckPixStatusData, CheckPixStatusResponse, CreatePixChargeData, PixChargeData,
+    PixChargeResponse,
+};
 use crate::{billing::BillingKind, error::AbacatePayError};
 use reqwest::{Client, StatusCode};
 use serde::Deserialize;
@@ -34,6 +37,11 @@ pub struct SimulatePixPaymentBuilder<'a> {
     id: String,
 }
 
+pub struct CheckPixStatusBuilder<'a> {
+    client: &'a AbacatePay,
+    id: String,
+}
+
 impl AbacatePay {
     pub fn new(api_key: String) -> Self {
         Self {
@@ -44,6 +52,9 @@ impl AbacatePay {
     }
     pub fn create_simulate_pix_payment(&self, id: String) -> SimulatePixPaymentBuilder {
         SimulatePixPaymentBuilder { client: self, id }
+    }
+    pub fn check_pix_status(&self, id: String) -> CheckPixStatusBuilder {
+        CheckPixStatusBuilder { client: self, id }
     }
     pub fn create_pix_charge(&self) -> PixChargeBuilder {
         PixChargeBuilder {
@@ -159,6 +170,47 @@ impl AbacatePay {
         }
     }
 }
+impl CheckPixStatusBuilder<'_> {
+    pub fn id(mut self, id: String) -> Self {
+        self.id = id;
+        self
+    }
+
+    #[instrument(skip(self))]
+    pub async fn build(self) -> Result<CheckPixStatusData, AbacatePayError> {
+        let url = format!("{}/pixQrCode/check", self.client.base_url);
+        let response = self
+            .client
+            .client
+            .post(&url)
+            .header("Authorization", format!("Bearer {}", self.client.api_key))
+            .header(
+                "User-Agent",
+                format!("Rust SDK {}", env!("CARGO_PKG_VERSION")),
+            )
+            .query(&["id", &self.id])
+            .send()
+            .await?;
+        let result: CheckPixStatusResponse = self.client.handle_response(response).await?;
+        match result {
+            CheckPixStatusResponse::Success { data, .. } => {
+                debug!(pix_charge_id = ?data.status, "Successfully get the status of the PIX payment");
+                Ok(data)
+            }
+            CheckPixStatusResponse::Error { error } => {
+                error!(
+                    error = error.as_str(),
+                    "API returned error in response body"
+                );
+                Err(AbacatePayError::ApiError {
+                    status: StatusCode::OK,
+                    message: error,
+                })
+            }
+        }
+    }
+}
+
 impl SimulatePixPaymentBuilder<'_> {
     pub fn id(mut self, id: String) -> Self {
         self.id = id;
@@ -180,13 +232,13 @@ impl SimulatePixPaymentBuilder<'_> {
             .query(&["id", &self.id])
             .send()
             .await?;
-        let result: CreatePixChargeResponse = self.client.handle_response(response).await?;
+        let result: PixChargeResponse = self.client.handle_response(response).await?;
         match result {
-            CreatePixChargeResponse::Success { data, .. } => {
+            PixChargeResponse::Success { data, .. } => {
                 debug!(pix_charge_id = ?data.id, "Successfully simulated PIX payment");
                 Ok(data)
             }
-            CreatePixChargeResponse::Error { error } => {
+            PixChargeResponse::Error { error } => {
                 error!(
                     error = error.as_str(),
                     "API returned error in response body"
@@ -233,13 +285,13 @@ impl PixChargeBuilder<'_> {
             .json(&self.data)
             .send()
             .await?;
-        let result: CreatePixChargeResponse = self.client.handle_response(response).await?;
+        let result: PixChargeResponse = self.client.handle_response(response).await?;
         match result {
-            CreatePixChargeResponse::Success { data, .. } => {
+            PixChargeResponse::Success { data, .. } => {
                 debug!(pix_charge_id = ?data.id, "Successfully created PIX charge");
                 Ok(data)
             }
-            CreatePixChargeResponse::Error { error } => {
+            PixChargeResponse::Error { error } => {
                 error!(
                     error = error.as_str(),
                     "API returned error in response body"
@@ -430,14 +482,17 @@ mod tests {
 
         assert_eq!(builder.data.amount, 100.0);
         assert_eq!(builder.data.expires_in, Some(3600));
-        assert_eq!(builder.data.description, Some("Test PIX charge".to_string()));
+        assert_eq!(
+            builder.data.description,
+            Some("Test PIX charge".to_string())
+        );
         assert!(builder.data.customer.is_none());
     }
 
     #[test]
     async fn pix_charge_with_customer() {
         let client = client();
-        
+
         let customer = CustomerMetadata {
             name: "John Doe".to_string(),
             email: "john@example.com".to_string(),

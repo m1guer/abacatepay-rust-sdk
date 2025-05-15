@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use super::billing::CustomerMetadata;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub enum PixChargeStatus {
+pub enum PixStatus {
     PENDING,
     EXPIRED,
     CANCELLED,
@@ -16,13 +16,20 @@ pub enum PixChargeStatus {
 pub struct PixChargeData {
     pub id: String,
     pub amount: f64,
-    pub status: PixChargeStatus,
+    pub status: PixStatus,
     pub dev_mode: bool,
     pub br_code: String,
     pub br_code_base64: String,
     pub platform_fee: i64,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub expires_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CheckPixStatusData {
+    pub status: PixStatus,
     pub expires_at: DateTime<Utc>,
 }
 
@@ -37,7 +44,19 @@ pub struct CreatePixChargeData {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(untagged)]
-pub enum CreatePixChargeResponse {
+pub enum CheckPixStatusResponse {
+    Success {
+        error: Option<()>,
+        data: CheckPixStatusData,
+    },
+    Error {
+        error: String,
+    },
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(untagged)]
+pub enum PixChargeResponse {
     Success {
         error: Option<()>,
         data: PixChargeData,
