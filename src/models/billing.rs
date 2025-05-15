@@ -17,7 +17,10 @@ pub enum BillingMethods {
 
 #[derive(Debug, PartialEq, Eq, Clone, Deserialize, Serialize)]
 pub enum BillingKind {
+    #[serde(rename = "ONE_TIME")]
     OneTime,
+    #[serde(rename = "MULTIPLE_PAYMENTS")]
+    MultiplePayments,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -35,7 +38,7 @@ pub struct Product {
     pub quantity: i64,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CustomerMetadata {
     pub name: String,

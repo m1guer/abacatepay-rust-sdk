@@ -1,6 +1,6 @@
 mod client;
 mod error;
-mod models;
+pub mod models;
 
 pub use client::AbacatePay;
 pub use error::AbacatePayError;

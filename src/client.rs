@@ -1,5 +1,9 @@
-use crate::error::AbacatePayError;
-use crate::models::*;
+use crate::billing::{
+    Billing, BillingMethods, CreateBillingData, CreateBillingProduct, CreateBillingResponse,
+    CustomerMetadata, ListBillingResponse,
+};
+use crate::pix_charge::{CreatePixChargeData, CreatePixChargeResponse, PixChargeData};
+use crate::{billing::BillingKind, error::AbacatePayError};
 use reqwest::{Client, StatusCode};
 use serde::Deserialize;
 use tracing::{debug, error, instrument};
@@ -20,12 +24,36 @@ pub struct BillingBuilder<'a> {
     data: CreateBillingData,
 }
 
+pub struct PixChargeBuilder<'a> {
+    client: &'a AbacatePay,
+    data: CreatePixChargeData,
+}
+
+pub struct SimulatePixPaymentBuilder<'a> {
+    client: &'a AbacatePay,
+    id: String,
+}
+
 impl AbacatePay {
     pub fn new(api_key: String) -> Self {
         Self {
             client: Client::new(),
             api_key,
             base_url: "https://api.abacatepay.com/v1".to_string(),
+        }
+    }
+    pub fn create_simulate_pix_payment(&self, id: String) -> SimulatePixPaymentBuilder {
+        SimulatePixPaymentBuilder { client: self, id }
+    }
+    pub fn create_pix_charge(&self) -> PixChargeBuilder {
+        PixChargeBuilder {
+            client: self,
+            data: CreatePixChargeData {
+                amount: 0.0,
+                expires_in: None,
+                description: None,
+                customer: None,
+            },
         }
     }
 
@@ -131,8 +159,101 @@ impl AbacatePay {
         }
     }
 }
+impl SimulatePixPaymentBuilder<'_> {
+    pub fn id(mut self, id: String) -> Self {
+        self.id = id;
+        self
+    }
 
-impl<'a> BillingBuilder<'a> {
+    #[instrument(skip(self))]
+    pub async fn build(self) -> Result<PixChargeData, AbacatePayError> {
+        let url = format!("{}/pixQrCode/simulate-payment", self.client.base_url);
+        let response = self
+            .client
+            .client
+            .post(&url)
+            .header("Authorization", format!("Bearer {}", self.client.api_key))
+            .header(
+                "User-Agent",
+                format!("Rust SDK {}", env!("CARGO_PKG_VERSION")),
+            )
+            .query(&["id", &self.id])
+            .send()
+            .await?;
+        let result: CreatePixChargeResponse = self.client.handle_response(response).await?;
+        match result {
+            CreatePixChargeResponse::Success { data, .. } => {
+                debug!(pix_charge_id = ?data.id, "Successfully simulated PIX payment");
+                Ok(data)
+            }
+            CreatePixChargeResponse::Error { error } => {
+                error!(
+                    error = error.as_str(),
+                    "API returned error in response body"
+                );
+                Err(AbacatePayError::ApiError {
+                    status: StatusCode::OK,
+                    message: error,
+                })
+            }
+        }
+    }
+}
+impl PixChargeBuilder<'_> {
+    pub fn amount(mut self, amount: f64) -> Self {
+        self.data.amount = amount;
+        self
+    }
+
+    pub fn expires_in(mut self, expires_in: Option<u64>) -> Self {
+        self.data.expires_in = expires_in;
+        self
+    }
+    pub fn description(mut self, description: Option<String>) -> Self {
+        self.data.description = description;
+        self
+    }
+    pub fn customer(mut self, customer: Option<CustomerMetadata>) -> Self {
+        self.data.customer = customer;
+        self
+    }
+
+    #[instrument(skip(self))]
+    pub async fn build(self) -> Result<PixChargeData, AbacatePayError> {
+        let url = format!("{}/pixQrCode/create", self.client.base_url);
+        let response = self
+            .client
+            .client
+            .post(&url)
+            .header("Authorization", format!("Bearer {}", self.client.api_key))
+            .header(
+                "User-Agent",
+                format!("Rust SDK {}", env!("CARGO_PKG_VERSION")),
+            )
+            .json(&self.data)
+            .send()
+            .await?;
+        let result: CreatePixChargeResponse = self.client.handle_response(response).await?;
+        match result {
+            CreatePixChargeResponse::Success { data, .. } => {
+                debug!(pix_charge_id = ?data.id, "Successfully created PIX charge");
+                Ok(data)
+            }
+            CreatePixChargeResponse::Error { error } => {
+                error!(
+                    error = error.as_str(),
+                    "API returned error in response body"
+                );
+                Err(AbacatePayError::ApiError {
+                    status: StatusCode::OK,
+                    message: error,
+                })
+            }
+        }
+    }
+}
+
+impl BillingBuilder<'_> {
     pub fn frequency(mut self, frequency: BillingKind) -> Self {
         self.data.frequency = frequency;
         self
@@ -295,5 +416,65 @@ mod tests {
         assert_eq!(builder.data.return_url, String::new());
         assert_eq!(builder.data.completion_url, String::new());
         assert_eq!(builder.data.customer_id, None);
+    }
+
+    #[test]
+    async fn create_pix_charge_builder() {
+        let client = client();
+
+        let builder = client
+            .create_pix_charge()
+            .amount(100.0)
+            .expires_in(Some(3600))
+            .description(Some("Test PIX charge".to_string()));
+
+        assert_eq!(builder.data.amount, 100.0);
+        assert_eq!(builder.data.expires_in, Some(3600));
+        assert_eq!(builder.data.description, Some("Test PIX charge".to_string()));
+        assert!(builder.data.customer.is_none());
+    }
+
+    #[test]
+    async fn pix_charge_with_customer() {
+        let client = client();
+        
+        let customer = CustomerMetadata {
+            name: "John Doe".to_string(),
+            email: "john@example.com".to_string(),
+            tax_id: "123.456.789-00".to_string(),
+            cellphone: "5511999999999".to_string(),
+        };
+
+        let builder = client.create_pix_charge().customer(Some(customer.clone()));
+
+        // Check customer data is correctly stored in the builder
+        let builder_customer = builder.data.customer.as_ref().unwrap();
+        assert!(builder_customer.name == customer.name);
+        assert!(builder_customer.email == customer.email);
+        assert!(builder_customer.tax_id == customer.tax_id);
+        assert!(builder_customer.cellphone == customer.cellphone);
+    }
+
+    #[test]
+    async fn pix_charge_default_values() {
+        let client = client();
+        let builder = client.create_pix_charge();
+
+        assert_eq!(builder.data.amount, 0.0);
+        assert_eq!(builder.data.expires_in, None);
+        assert_eq!(builder.data.description, None);
+        assert!(builder.data.customer.is_none());
+    }
+
+    #[test]
+    async fn simulate_pix_payment_builder() {
+        let client = client();
+
+        let builder = client.create_simulate_pix_payment("test-charge-id".to_string());
+        assert_eq!(builder.id, "test-charge-id");
+
+        // Test the setter method
+        let builder = builder.id("new-test-id".to_string());
+        assert_eq!(builder.id, "new-test-id");
     }
 }
