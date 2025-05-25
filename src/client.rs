@@ -60,7 +60,7 @@ impl AbacatePay {
         PixChargeBuilder {
             client: self,
             data: CreatePixChargeData {
-                amount: 0.0,
+                amount: 0,
                 expires_in: None,
                 description: None,
                 customer: None,
@@ -252,7 +252,7 @@ impl SimulatePixPaymentBuilder<'_> {
     }
 }
 impl PixChargeBuilder<'_> {
-    pub fn amount(mut self, amount: f64) -> Self {
+    pub fn amount(mut self, amount: i64) -> Self {
         self.data.amount = amount;
         self
     }
@@ -476,11 +476,11 @@ mod tests {
 
         let builder = client
             .create_pix_charge()
-            .amount(100.0)
+            .amount(1000)
             .expires_in(Some(3600))
             .description(Some("Test PIX charge".to_string()));
 
-        assert_eq!(builder.data.amount, 100.0);
+        assert_eq!(builder.data.amount, 1000);
         assert_eq!(builder.data.expires_in, Some(3600));
         assert_eq!(
             builder.data.description,
@@ -515,7 +515,7 @@ mod tests {
         let client = client();
         let builder = client.create_pix_charge();
 
-        assert_eq!(builder.data.amount, 0.0);
+        assert_eq!(builder.data.amount, 00);
         assert_eq!(builder.data.expires_in, None);
         assert_eq!(builder.data.description, None);
         assert!(builder.data.customer.is_none());

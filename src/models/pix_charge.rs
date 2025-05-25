@@ -15,7 +15,7 @@ pub enum PixStatus {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct PixChargeData {
     pub id: String,
-    pub amount: f64,
+    pub amount: i64,
     pub status: PixStatus,
     pub dev_mode: bool,
     pub br_code: String,
@@ -36,7 +36,7 @@ pub struct CheckPixStatusData {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreatePixChargeData {
-    pub amount: f64,
+    pub amount: i64,
     pub expires_in: Option<u64>,
     pub description: Option<String>,
     pub customer: Option<CustomerMetadata>,
