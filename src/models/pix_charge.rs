@@ -37,8 +37,11 @@ pub struct CheckPixStatusData {
 #[serde(rename_all = "camelCase")]
 pub struct CreatePixChargeData {
     pub amount: i64,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub expires_in: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub customer: Option<CustomerMetadata>,
 }
 
