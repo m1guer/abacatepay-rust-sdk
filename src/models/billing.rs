@@ -112,8 +112,15 @@ pub struct CreateBillingData {
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 pub enum CreateBillingResponse {
-    Success { error: Option<()>, billing: Billing },
-    Error { error: String },
+    Success {
+        error: Option<()>,
+        billing: Billing,
+    },
+    Error {
+        error: String,
+        message: String,
+        code: String,
+    },
 }
 
 #[derive(Debug, Deserialize)]
@@ -125,5 +132,7 @@ pub enum ListBillingResponse {
     },
     Error {
         error: String,
+        message: String,
+        code: String,
     },
 }

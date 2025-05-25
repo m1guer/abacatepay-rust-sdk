@@ -14,6 +14,8 @@ use tracing::{debug, error, instrument};
 #[derive(Debug, Deserialize)]
 struct ErrorResponse {
     error: String,
+    message: String,
+    code: String,
 }
 
 pub struct AbacatePay {
@@ -109,14 +111,20 @@ impl AbacatePay {
                 );
                 Ok(billings)
             }
-            ListBillingResponse::Error { error } => {
+            ListBillingResponse::Error {
+                error,
+                code,
+                message,
+            } => {
                 error!(
                     error = error.as_str(),
                     "API returned error in response body"
                 );
                 Err(AbacatePayError::ApiError {
                     status: StatusCode::OK,
-                    message: error,
+                    code: code,
+                    error: error,
+                    message: message,
                 })
             }
         }
@@ -144,7 +152,9 @@ impl AbacatePay {
                 );
                 return Err(AbacatePayError::ApiError {
                     status,
-                    message: error_response.error,
+                    code: error_response.code,
+                    error: error_response.error,
+                    message: error_response.message,
                 });
             }
 
@@ -197,14 +207,20 @@ impl CheckPixStatusBuilder<'_> {
                 debug!(pix_charge_id = ?data.status, "Successfully get the status of the PIX payment");
                 Ok(data)
             }
-            CheckPixStatusResponse::Error { error } => {
+            CheckPixStatusResponse::Error {
+                error,
+                code,
+                message,
+            } => {
                 error!(
                     error = error.as_str(),
                     "API returned error in response body"
                 );
                 Err(AbacatePayError::ApiError {
                     status: StatusCode::OK,
-                    message: error,
+                    code,
+                    error,
+                    message,
                 })
             }
         }
@@ -238,14 +254,20 @@ impl SimulatePixPaymentBuilder<'_> {
                 debug!(pix_charge_id = ?data.id, "Successfully simulated PIX payment");
                 Ok(data)
             }
-            PixChargeResponse::Error { error } => {
+            PixChargeResponse::Error {
+                error,
+                code,
+                message,
+            } => {
                 error!(
                     error = error.as_str(),
                     "API returned error in response body"
                 );
                 Err(AbacatePayError::ApiError {
                     status: StatusCode::OK,
-                    message: error,
+                    error: error,
+                    message: message,
+                    code: code,
                 })
             }
         }
@@ -291,14 +313,20 @@ impl PixChargeBuilder<'_> {
                 debug!(pix_charge_id = ?data.id, "Successfully created PIX charge");
                 Ok(data)
             }
-            PixChargeResponse::Error { error } => {
+            PixChargeResponse::Error {
+                error,
+                code,
+                message,
+            } => {
                 error!(
                     error = error.as_str(),
                     "API returned error in response body"
                 );
                 Err(AbacatePayError::ApiError {
                     status: StatusCode::OK,
-                    message: error,
+                    code,
+                    error,
+                    message,
                 })
             }
         }
@@ -366,14 +394,20 @@ impl BillingBuilder<'_> {
                 debug!(billing_id = ?billing._id, "Successfully created billing");
                 Ok(billing)
             }
-            CreateBillingResponse::Error { error } => {
+            CreateBillingResponse::Error {
+                error,
+                code,
+                message,
+            } => {
                 error!(
                     error = error.as_str(),
                     "API returned error in response body"
                 );
                 Err(AbacatePayError::ApiError {
                     status: StatusCode::OK,
-                    message: error,
+                    code,
+                    error,
+                    message,
                 })
             }
         }

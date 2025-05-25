@@ -51,6 +51,8 @@ pub enum CheckPixStatusResponse {
     },
     Error {
         error: String,
+        message: String,
+        code: String,
     },
 }
 
@@ -63,5 +65,7 @@ pub enum PixChargeResponse {
     },
     Error {
         error: String,
+        message: String,
+        code: String,
     },
 }

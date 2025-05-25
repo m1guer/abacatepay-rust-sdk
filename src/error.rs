@@ -7,7 +7,12 @@ pub enum AbacatePayError {
     RequestError(#[from] reqwest::Error),
 
     #[error("API error ({status}): {message}")]
-    ApiError { status: StatusCode, message: String },
+    ApiError {
+        status: StatusCode,
+        error: String,
+        message: String,
+        code: String,
+    },
 
     #[error("Failed to parse API response: {message}. Response: {response}")]
     ParseError { message: String, response: String },
