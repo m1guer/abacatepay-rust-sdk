@@ -251,7 +251,7 @@ impl SimulatePixPaymentBuilder<'_> {
         let result: PixChargeResponse = self.client.handle_response(response).await?;
         match result {
             PixChargeResponse::Success { data, .. } => {
-                debug!(pix_charge_id = ?data.id, "Successfully simulated PIX payment");
+                debug!(pix_charge_id = ?data.amount, "Successfully simulated PIX payment");
                 Ok(data)
             }
             PixChargeResponse::Error {
@@ -310,7 +310,7 @@ impl PixChargeBuilder<'_> {
         let result: PixChargeResponse = self.client.handle_response(response).await?;
         match result {
             PixChargeResponse::Success { data, .. } => {
-                debug!(pix_charge_id = ?data.id, "Successfully created PIX charge");
+                debug!(pix_charge_id = ?data.amount, "Successfully created PIX charge");
                 Ok(data)
             }
             PixChargeResponse::Error {

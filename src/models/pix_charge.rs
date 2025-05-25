@@ -13,17 +13,14 @@ pub enum PixStatus {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PixChargeData {
-    pub id: String,
     pub amount: i64,
-    pub status: PixStatus,
+    pub status: String,
     pub dev_mode: bool,
+    pub method: String,
     pub br_code: String,
     pub br_code_base64: String,
-    pub platform_fee: i64,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-    pub expires_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
