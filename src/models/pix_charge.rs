@@ -21,6 +21,11 @@ pub struct PixChargeData {
     pub method: String,
     pub br_code: String,
     pub br_code_base64: String,
+    pub platform_fee: i64,
+    pub created_at: String,
+    pub updated_at: String,
+    pub expires_at: String,
+    pub id: String,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
